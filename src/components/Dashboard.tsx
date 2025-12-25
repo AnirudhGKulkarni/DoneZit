@@ -7,7 +7,9 @@ import { TaskForm } from '@/components/TaskForm';
 import { FilterBar } from '@/components/FilterBar';
 import { StatsCards } from '@/components/StatsCards';
 import { Button } from '@/components/ui/button';
-import { Plus, LogOut, CheckCircle2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Plus, LogOut } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthContext();
@@ -34,17 +36,19 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const { toast } = useToast();
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 glass border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-              <CheckCircle2 className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">TaskFlow</h1>
+              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
+                <Logo className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-foreground">Taskify</h1>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
           </div>
@@ -117,6 +121,10 @@ export const Dashboard: React.FC = () => {
         {showForm && (
           <TaskForm
             onSubmit={(data) => {
+              if (!user?.uid) {
+                toast({ title: 'Not signed in', description: 'Please log in to create tasks', variant: 'destructive' });
+                return;
+              }
               addTask(data);
               setShowForm(false);
             }}
