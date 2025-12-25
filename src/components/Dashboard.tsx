@@ -1,19 +1,60 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
+
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useTasks } from '@/hooks/useTasks';
+import { useToast } from '@/hooks/use-toast';
+
+import TopNav from '@/components/TopNav';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskForm } from '@/components/TaskForm';
 import { FilterBar } from '@/components/FilterBar';
 import { StatsCards } from '@/components/StatsCards';
+
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { Plus, LogOut } from 'lucide-react';
-import Logo from '@/components/Logo';
+// header-related dropdown/avatar removed; TopNav provides those
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { user, logout } = useAuthContext();
+  const { toast } = useToast();
+
   const [showForm, setShowForm] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('theme');
+      if (v) return v === 'dark';
+    } catch {}
+    return document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    try {
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    } catch {}
+  }, [isDark]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (err: any) {
+      toast({
+        title: 'Logout failed',
+        description: err?.message || 'Unable to logout',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const {
     filteredTasks,
     filter,
@@ -23,47 +64,19 @@ export const Dashboard: React.FC = () => {
     addTask,
     deleteTask,
     toggleTaskStatus,
-    getTaskStats
+    getTaskStats,
   } = useTasks(user?.uid || null);
 
   const stats = getTaskStats();
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
-  const { toast } = useToast();
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-border/50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center overflow-hidden">
-                <Logo className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">Taskify</h1>
-              <p className="text-xs text-muted-foreground">{user?.email}</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
-        </div>
-      </header>
+      <TopNav />
 
+      {/* ================= MAIN ================= */}
       <main className="container mx-auto px-4 py-6 space-y-6">
-        {/* Stats */}
         <StatsCards stats={stats} />
 
-        {/* Filter Bar */}
         <FilterBar
           filter={filter}
           categoryFilter={categoryFilter}
@@ -71,7 +84,6 @@ export const Dashboard: React.FC = () => {
           onCategoryChange={setCategoryFilter}
         />
 
-        {/* Add Task Button */}
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
           <Button
             variant="gradient"
@@ -116,17 +128,26 @@ export const Dashboard: React.FC = () => {
         </div>
       </main>
 
-      {/* Task Form Modal */}
+      {/* ================= TASK MODAL ================= */}
       <AnimatePresence>
         {showForm && (
           <TaskForm
-            onSubmit={(data) => {
+            onSubmit={async data => {
               if (!user?.uid) {
-                toast({ title: 'Not signed in', description: 'Please log in to create tasks', variant: 'destructive' });
+                toast({ title: 'Not authenticated' });
                 return;
               }
-              addTask(data);
-              setShowForm(false);
+              try {
+                await addTask(data);
+                setShowForm(false);
+                toast({ title: 'Task added successfully' });
+              } catch {
+                toast({
+                  title: 'Error',
+                  description: 'Failed to add task',
+                  variant: 'destructive',
+                });
+              }
             }}
             onClose={() => setShowForm(false)}
           />
@@ -135,3 +156,4 @@ export const Dashboard: React.FC = () => {
     </div>
   );
 };
+export default Dashboard;

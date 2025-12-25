@@ -13,12 +13,14 @@ import {
   getAuth, 
   Auth, 
   createUserWithEmailAndPassword,
+  updateProfile,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
   User as FirebaseUser,
   UserCredential
 } from 'firebase/auth';
+import { getFirestore, setDoc, doc, serverTimestamp, Firestore } from 'firebase/firestore';
 
 // Firebase configuration object
 // Replace these values with your actual Firebase project credentials
@@ -34,10 +36,12 @@ const firebaseConfig = {
 // Initialize Firebase
 let app: FirebaseApp;
 let auth: Auth;
+let db: Firestore;
 
 try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
+  db = getFirestore(app);
 } catch (error) {
   console.error("Firebase initialization error:", error);
   throw error;
@@ -49,9 +53,37 @@ try {
  * @param password - User's password (min 6 characters)
  * @returns Promise with UserCredential on success
  */
-export const registerUser = async (email: string, password: string): Promise<UserCredential> => {
+export const registerUser = async (
+  email: string,
+  password: string,
+  firstName?: string,
+  lastName?: string
+): Promise<UserCredential> => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    // Update display name if provided
+    try {
+      const displayName = [firstName, lastName].filter(Boolean).join(' ').trim();
+      if (displayName) {
+        await updateProfile(userCredential.user, { displayName });
+      }
+    } catch (err) {
+      // Non-fatal: profile update failed but registration succeeded
+      console.warn('Failed to update user profile:', err);
+    }
+    
+      // Create/merge a user document in Firestore with profile fields
+      try {
+        await setDoc(doc(db, 'users', userCredential.user.uid), {
+          email,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          displayName: userCredential.user.displayName || null,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      } catch (err) {
+        console.warn('Failed to create user doc in Firestore:', err);
+      }
     return userCredential;
   } catch (error: any) {
     // Handle specific Firebase auth errors with user-friendly messages
@@ -137,5 +169,5 @@ export const subscribeToAuthChanges = (
   return onAuthStateChanged(auth, callback);
 };
 
-export { auth };
+export { auth, db };
 export type { FirebaseUser };

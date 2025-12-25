@@ -5,7 +5,7 @@ interface LogoProps {
   alt?: string;
 }
 
-export const Logo: React.FC<LogoProps> = ({ className = 'w-10 h-10', alt = 'Taskify logo' }) => {
+export const Logo: React.FC<LogoProps> = ({ className = 'w-10 h-10', alt = 'DoneZit logo' }) => {
   // Render plain image (no wrapper). Parent controls alignment and spacing.
   return <img src="/logo.png" alt={alt} className={`${className} object-contain mx-auto`} />;
 };

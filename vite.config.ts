@@ -1,7 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-// Removed lovable-tagger - not needed for Taskify
+// Removed lovable-tagger - not needed for DoneZit
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({

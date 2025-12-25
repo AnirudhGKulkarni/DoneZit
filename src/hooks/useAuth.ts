@@ -18,7 +18,7 @@ import { User, AuthState } from '@/types';
 
 interface UseAuthReturn extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -29,6 +29,7 @@ const mapFirebaseUser = (firebaseUser: FirebaseUser): User => ({
   uid: firebaseUser.uid,
   email: firebaseUser.email,
   displayName: firebaseUser.displayName,
+  photoURL: firebaseUser.photoURL ?? null,
   createdAt: firebaseUser.metadata.creationTime 
     ? new Date(firebaseUser.metadata.creationTime) 
     : undefined
@@ -57,12 +58,12 @@ export const useAuth = (): UseAuthReturn => {
   /**
    * Register a new user
    */
-  const register = useCallback(async (email: string, password: string): Promise<void> => {
+  const register = useCallback(async (email: string, password: string, firstName?: string, lastName?: string): Promise<void> => {
     setLoading(true);
     setError(null);
     
     try {
-      await registerUser(email, password);
+      await registerUser(email, password, firstName, lastName);
       // Auth state listener will update the user
     } catch (err: any) {
       setError(err.message);

@@ -10,6 +10,8 @@ export const AuthScreen: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuthContext();
   const { toast } = useToast();
@@ -23,7 +25,7 @@ export const AuthScreen: React.FC = () => {
       if (isLogin) {
         await login(email, password);
       } else {
-        await register(email, password);
+        await register(email, password, firstName.trim() || undefined, lastName.trim() || undefined);
       }
       toast({ title: isLogin ? 'Welcome back!' : 'Account created!' });
     } catch (error: any) {
@@ -65,9 +67,9 @@ export const AuthScreen: React.FC = () => {
               transition={{ type: 'spring', delay: 0.2 }}
               className="mx-auto mb-4"
             >
-              <Logo className="w-24 h-24" />
+              <Logo className="w-30 h-24" />
             </motion.div>
-            <h1 className="text-3xl font-bold text-white drop-shadow-lg">Taskify</h1>
+            <h1 className="text-3xl font-bold text-white drop-shadow-lg">DoneZit</h1>
             <p className="text-white/90 mt-2 drop-shadow-sm">Organize your life beautifully</p>
           </div>
 
@@ -89,6 +91,26 @@ export const AuthScreen: React.FC = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="First name"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full h-12 px-4 rounded-lg border-2 border-white/10 bg-white/5 text-white placeholder:text-white/70 focus:border-white/30 focus:outline-none transition-colors"
+                  required={!isLogin}
+                />
+                <input
+                  type="text"
+                  placeholder="Last name"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full h-12 px-4 rounded-lg border-2 border-white/10 bg-white/5 text-white placeholder:text-white/70 focus:border-white/30 focus:outline-none transition-colors"
+                  required={!isLogin}
+                />
+              </div>
+            )}
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <input

@@ -1,4 +1,4 @@
-import { AuthProvider, useAuthContext } from '@/contexts/AuthContext';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Dashboard } from '@/components/Dashboard';
 import { AuthScreen } from '@/components/AuthScreen';
 import { Loader2 } from 'lucide-react';
@@ -18,11 +18,7 @@ const AppContent = () => {
 };
 
 const Index = () => {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 };
 
 export default Index;
