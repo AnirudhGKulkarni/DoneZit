@@ -8,6 +8,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useToast } from '@/hooks/use-toast';
 
 import TopNav from '@/components/TopNav';
+import VideoBg from '@/components/VideoBg';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskForm } from '@/components/TaskForm';
 import { FilterBar } from '@/components/FilterBar';
@@ -70,11 +71,12 @@ export const Dashboard: React.FC = () => {
   const stats = getTaskStats();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent relative">
+      <VideoBg />
       <TopNav />
 
       {/* ================= MAIN ================= */}
-      <main className="container mx-auto px-4 py-6 space-y-6">
+      <main className="relative z-10 container mx-auto px-4 py-6 space-y-6">
         <StatsCards stats={stats} />
 
         <FilterBar

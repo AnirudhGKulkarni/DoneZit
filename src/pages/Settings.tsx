@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { auth, db } from '@/services/firebase';
 import TopNav from '@/components/TopNav';
+import VideoBg from '@/components/VideoBg';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -96,9 +97,10 @@ const Settings: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-transparent relative">
+      <VideoBg />
       <TopNav />
-      <div className="container mx-auto px-4 py-6">
+      <div className="relative z-10 container mx-auto px-4 py-6">
         <div className="max-w-md mx-auto bg-card rounded-2xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Account Settings</h2>

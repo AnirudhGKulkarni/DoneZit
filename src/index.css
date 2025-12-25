@@ -152,6 +152,15 @@
     box-shadow: var(--shadow-glow);
   }
 
+  /* Page background helpers that respect the color variables for light/dark */
+  .lightbg {
+    background-color: hsl(var(--background));
+  }
+
+  .darkbg {
+    background-color: hsl(var(--background));
+  }
+
   .priority-high {
     @apply bg-[hsl(var(--priority-high))] text-[hsl(var(--destructive-foreground))];
   }

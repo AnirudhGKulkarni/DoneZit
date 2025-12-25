@@ -45,8 +45,19 @@ const TopNav: React.FC = () => {
   }, [isDark]);
 
   return (
-    <header className="sticky top-0 z-50 glass border-b border-border/50">
-      <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <header className="sticky top-0 z-50 glass border-b border-border/50 relative overflow-hidden">
+      {/* background image that switches by theme */}
+      <div
+        aria-hidden
+        className="absolute inset-0 z-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${isDark ? '/darknav.jpeg' : '/lightnav.jpeg'})` }}
+      />
+      {/* contrast overlay so text stays readable */}
+      <div
+        aria-hidden
+        className={`absolute inset-0 z-10 pointer-events-none ${isDark ? 'bg-black/50' : 'bg-white/40 backdrop-blur-sm'}`}
+      />
+      <div className={`container mx-auto px-4 py-4 flex items-center justify-between relative z-20 font-extrabold ${isDark ? 'text-white' : 'text-black'}`}>
         <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <button aria-label="Go to dashboard" onClick={() => navigate('/')} className="flex items-center">
