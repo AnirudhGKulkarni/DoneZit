@@ -1,0 +1,274 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    --primary: 252 85% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 220 25% 25%;
+
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 252 85% 95%;
+    --accent-foreground: 252 85% 45%;
+
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 70% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 95% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --priority-high: 0 85% 60%;
+    --priority-medium: 38 95% 55%;
+    --priority-low: 142 70% 45%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 252 85% 60%;
+
+    --radius: 0.75rem;
+
+    --gradient-primary: linear-gradient(135deg, hsl(252 85% 60%) 0%, hsl(280 85% 55%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(252 85% 60% / 0.1) 0%, hsl(280 85% 55% / 0.05) 100%);
+
+    --shadow-sm: 0 1px 2px hsl(220 25% 10% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(220 25% 10% / 0.08), 0 2px 4px -1px hsl(220 25% 10% / 0.04);
+    --shadow-lg: 0 10px 15px -3px hsl(220 25% 10% / 0.1), 0 4px 6px -2px hsl(220 25% 10% / 0.05);
+    --shadow-glow: 0 0 30px hsl(252 85% 60% / 0.25);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 25% 8%;
+    --foreground: 220 20% 95%;
+
+    --card: 222 25% 12%;
+    --card-foreground: 220 20% 95%;
+
+    --popover: 222 25% 12%;
+    --popover-foreground: 220 20% 95%;
+
+    --primary: 252 85% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 222 20% 18%;
+    --secondary-foreground: 220 20% 85%;
+
+    --muted: 222 20% 15%;
+    --muted-foreground: 220 15% 55%;
+
+    --accent: 252 50% 20%;
+    --accent-foreground: 252 85% 75%;
+
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 85% 55%;
+    --warning-foreground: 0 0% 100%;
+
+    --priority-high: 0 85% 55%;
+    --priority-medium: 38 85% 55%;
+    --priority-low: 142 60% 50%;
+
+    --border: 222 20% 20%;
+    --input: 222 20% 20%;
+    --ring: 252 85% 65%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(252 85% 65%) 0%, hsl(280 85% 60%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(222 25% 14%) 0%, hsl(222 25% 10%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(252 85% 65% / 0.15) 0%, hsl(280 85% 60% / 0.08) 100%);
+
+    --shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.2);
+    --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
+    --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.4), 0 4px 6px -2px hsl(0 0% 0% / 0.25);
+    --shadow-glow: 0 0 40px hsl(252 85% 65% / 0.3);
+
+    --sidebar-background: 222 25% 10%;
+    --sidebar-foreground: 220 20% 90%;
+    --sidebar-primary: 252 85% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 20% 15%;
+    --sidebar-accent-foreground: 220 20% 90%;
+    --sidebar-border: 222 20% 18%;
+    --sidebar-ring: 252 85% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-card {
+    background: var(--gradient-card);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .priority-high {
+    @apply bg-[hsl(var(--priority-high))] text-[hsl(var(--destructive-foreground))];
+  }
+
+  .priority-medium {
+    @apply bg-[hsl(var(--priority-medium))] text-[hsl(var(--warning-foreground))];
+  }
+
+  .priority-low {
+    @apply bg-[hsl(var(--priority-low))] text-[hsl(var(--success-foreground))];
+  }
+
+  .priority-high-text {
+    @apply text-[hsl(var(--priority-high))];
+  }
+
+  .priority-medium-text {
+    @apply text-[hsl(var(--priority-medium))];
+  }
+
+  .priority-low-text {
+    @apply text-[hsl(var(--priority-low))];
+  }
+
+  .glass {
+    @apply bg-card/80 backdrop-blur-xl;
+  }
+}
+
+@layer components {
+  .animate-fade-up {
+    animation: fadeUp 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  .animate-bounce-in {
+    animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bounceIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50 transition-colors;
+}
