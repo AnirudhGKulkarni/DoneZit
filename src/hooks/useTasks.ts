@@ -11,7 +11,21 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Task, TaskFormData, Priority, FilterType } from '@/types';
+import { Task, TaskFormData, Priority, FilterType, TaskStatus } from '@/types';
+import { db } from '@/services/firebase';
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  doc as firestoreDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
 
 interface UseTasksReturn {
   tasks: Task[];
@@ -20,7 +34,7 @@ interface UseTasksReturn {
   categoryFilter: string | null;
   setFilter: (filter: FilterType) => void;
   setCategoryFilter: (category: string | null) => void;
-  addTask: (taskData: TaskFormData) => void;
+  addTask: (taskData: TaskFormData) => Promise<void>;
   updateTask: (id: string, taskData: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   toggleTaskStatus: (id: string) => void;
@@ -117,28 +131,93 @@ export const useTasks = (userId: string | null): UseTasksReturn => {
   const [filter, setFilter] = useState<FilterType>('all');
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
 
-  // Load tasks from localStorage on mount
+  // Subscribe to Firestore realtime tasks for the user (fallback to localStorage)
   useEffect(() => {
-    if (userId) {
+    if (!userId) {
+      setTasks([]);
+      return;
+    }
+
+    // Subscribe to Firestore collection for this user's tasks
+    try {
+      const tasksCol = collection(db, 'users', userId, 'tasks');
+      const q = query(tasksCol, orderBy('createdAt', 'asc'));
+      const unsub = onSnapshot(q, snapshot => {
+        const docs: Task[] = snapshot.docs.map(d => {
+          const data: any = d.data();
+          return {
+            id: d.id,
+            userId,
+            title: data.title,
+            description: data.description,
+            createdAt: data.createdAt && data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt),
+            deadline: data.deadline && data.deadline.toDate ? data.deadline.toDate() : new Date(data.deadline),
+            priority: data.priority,
+            status: data.status as TaskStatus,
+            category: data.category,
+            categoryColor: data.categoryColor
+          };
+        });
+
+        setTasks(sortTasks(docs));
+
+        // also persist a local copy for offline fallback
+        try {
+          localStorage.setItem(`tasks_${userId}`, JSON.stringify(docs));
+        } catch (e) {
+          // ignore localStorage errors
+        }
+      }, err => {
+        console.error('Tasks realtime listener error:', err);
+        // If permissions prevent reading from Firestore, fall back to cached localStorage copy
+        try {
+          const isPermissionError = (err && (err.code === 'permission-denied' || /permission/i.test(String(err.message || ''))));
+          if (isPermissionError) {
+            console.warn('Firestore permission denied — loading tasks from localStorage fallback.');
+            const storageKey = `tasks_${userId}`;
+            const storedTasks = localStorage.getItem(storageKey);
+            if (storedTasks) {
+              try {
+                const parsed = JSON.parse(storedTasks);
+                const tasksWithDates = parsed.map((task: any) => ({
+                  ...task,
+                  createdAt: new Date(task.createdAt),
+                  deadline: new Date(task.deadline)
+                }));
+                setTasks(sortTasks(tasksWithDates));
+              } catch (e) {
+                console.error('Failed to parse stored tasks fallback:', e);
+                setTasks([]);
+              }
+            } else {
+              setTasks([]);
+            }
+          }
+        } catch (e) {
+          console.error('Error handling realtime listener failure:', e);
+        }
+      });
+
+      return () => unsub();
+    } catch (e) {
+      console.error('Failed to subscribe to tasks:', e);
+      // fallback: try to load from localStorage
       const storageKey = `tasks_${userId}`;
       const storedTasks = localStorage.getItem(storageKey);
       if (storedTasks) {
         try {
           const parsed = JSON.parse(storedTasks);
-          // Convert date strings back to Date objects
           const tasksWithDates = parsed.map((task: any) => ({
             ...task,
             createdAt: new Date(task.createdAt),
             deadline: new Date(task.deadline)
           }));
           setTasks(tasksWithDates);
-        } catch (e) {
-          console.error('Failed to parse stored tasks:', e);
+        } catch (err) {
+          console.error('Failed to parse stored tasks:', err);
           setTasks([]);
         }
       }
-    } else {
-      setTasks([]);
     }
   }, [userId]);
 
@@ -153,87 +232,107 @@ export const useTasks = (userId: string | null): UseTasksReturn => {
   /**
    * Add a new task
    */
-  const addTask = useCallback((taskData: TaskFormData) => {
+  const addTask = useCallback(async (taskData: TaskFormData) => {
     if (!userId) return;
 
-    // generate id (use crypto.randomUUID when available, otherwise fallback)
-    const generateId = (): string => {
-      try {
-        if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-          // @ts-ignore
-          return crypto.randomUUID();
-        }
-      } catch (e) {
-        // fall through to fallback
-      }
-
-      // fallback UUID v4 generator
-      const bytes = new Uint8Array(16);
-      if (typeof crypto !== 'undefined' && 'getRandomValues' in crypto) {
-        // @ts-ignore
-        crypto.getRandomValues(bytes);
-      } else {
-        for (let i = 0; i < 16; i++) {
-          bytes[i] = Math.floor(Math.random() * 256);
-        }
-      }
-      // Per RFC4122 v4
-      bytes[6] = (bytes[6] & 0x0f) | 0x40;
-      bytes[8] = (bytes[8] & 0x3f) | 0x80;
-      const hex: string[] = [];
-      for (let i = 0; i < 16; i++) {
-        hex.push(bytes[i].toString(16).padStart(2, '0'));
-      }
-      return `${hex.slice(0,4).join('')}-${hex.slice(4,6).join('')}-${hex.slice(6,8).join('')}-${hex.slice(8,10).join('')}-${hex.slice(10,16).join('')}`;
-    };
-
-    const newTask: Task = {
-      id: generateId(),
-      userId,
-      title: taskData.title,
-      description: taskData.description,
-      createdAt: new Date(),
-      deadline: taskData.deadline,
-      priority: taskData.priority,
-      status: 'pending',
-      category: taskData.category,
-    };
-
-    setTasks(prev => sortTasks([...prev, newTask]));
+    try {
+      const tasksCol = collection(db, 'users', userId, 'tasks');
+      await addDoc(tasksCol, {
+        title: taskData.title,
+        description: taskData.description,
+        createdAt: serverTimestamp(),
+        deadline: Timestamp.fromDate(new Date(taskData.deadline)),
+        priority: taskData.priority,
+        status: 'pending',
+        category: taskData.category || null
+      });
+      // onSnapshot listener will update local state
+    } catch (e) {
+      console.error('Failed to add task to Firestore:', e);
+      // fallback: local-only add
+      const fallbackId = `local-${Date.now()}`;
+      const newTask: Task = {
+        id: fallbackId,
+        userId,
+        title: taskData.title,
+        description: taskData.description,
+        createdAt: new Date(),
+        deadline: taskData.deadline,
+        priority: taskData.priority,
+        status: 'pending',
+        category: taskData.category
+      };
+      setTasks(prev => sortTasks([...prev, newTask]));
+    }
   }, [userId]);
 
   /**
    * Update an existing task
    */
   const updateTask = useCallback((id: string, updates: Partial<Task>) => {
-    setTasks(prev => {
-      const updated = prev.map(task => 
-        task.id === id ? { ...task, ...updates } : task
-      );
-      return sortTasks(updated);
-    });
-  }, []);
+    if (!userId) return;
+
+    (async () => {
+      try {
+        const taskRef = firestoreDoc(db, 'users', userId, 'tasks', id);
+        const payload: any = { ...updates };
+        if (updates.deadline) payload.deadline = Timestamp.fromDate(new Date(updates.deadline as any));
+        await updateDoc(taskRef, payload);
+        // onSnapshot will update local state
+      } catch (e) {
+        console.error('Failed to update task in Firestore:', e);
+        // fallback to local update
+        setTasks(prev => {
+          const updated = prev.map(task => task.id === id ? { ...task, ...updates } : task);
+          return sortTasks(updated as Task[]);
+        });
+      }
+    })();
+  }, [userId]);
 
   /**
    * Delete a task
    */
   const deleteTask = useCallback((id: string) => {
-    setTasks(prev => prev.filter(task => task.id !== id));
-  }, []);
+    if (!userId) return;
+
+    (async () => {
+      try {
+        const taskRef = firestoreDoc(db, 'users', userId, 'tasks', id);
+        await deleteDoc(taskRef);
+      } catch (e) {
+        console.error('Failed to delete task from Firestore:', e);
+        // fallback local delete
+        setTasks(prev => prev.filter(task => task.id !== id));
+      }
+    })();
+  }, [userId]);
 
   /**
    * Toggle task status between pending and completed
    */
   const toggleTaskStatus = useCallback((id: string) => {
-    setTasks(prev => {
-      const updated = prev.map(task => 
-        task.id === id 
-          ? { ...task, status: (task.status === 'pending' ? 'completed' : 'pending') as 'pending' | 'completed' }
-          : task
-      );
-      return sortTasks(updated);
-    });
-  }, []);
+    if (!userId) return;
+
+    const toggle = async () => {
+      try {
+        // find existing task in local state
+        const existing = tasks.find(t => t.id === id);
+        if (!existing) return;
+        const newStatus = existing.status === 'pending' ? 'completed' : 'pending';
+        const taskRef = firestoreDoc(db, 'users', userId, 'tasks', id);
+        await updateDoc(taskRef, { status: newStatus });
+      } catch (e) {
+        console.error('Failed to toggle task status in Firestore:', e);
+        setTasks(prev => {
+          const updated = prev.map(task => task.id === id ? { ...task, status: task.status === 'pending' ? 'completed' : 'pending' } : task);
+          return sortTasks(updated as Task[]);
+        });
+      }
+    };
+
+    toggle();
+  }, [userId, tasks]);
 
   /**
    * Get task statistics

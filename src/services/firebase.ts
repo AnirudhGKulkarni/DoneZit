@@ -20,7 +20,7 @@ import {
   User as FirebaseUser,
   UserCredential
 } from 'firebase/auth';
-import { getFirestore, setDoc, doc, serverTimestamp, Firestore } from 'firebase/firestore';
+import { getFirestore, setDoc, doc, serverTimestamp, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Firebase configuration object
 // Replace these values with your actual Firebase project credentials
@@ -42,6 +42,18 @@ try {
   app = initializeApp(firebaseConfig);
   auth = getAuth(app);
   db = getFirestore(app);
+  // Enable IndexedDB persistence for offline support
+  // This allows Firestore to cache data locally and queue writes while offline.
+  // If multi-tab persistence fails, it's non-fatal and we continue without it.
+  try {
+    enableIndexedDbPersistence(db).catch((err) => {
+      // Common error: failed-precondition (multiple tabs)
+      // or unimplemented (browser doesn't support persistence)
+      console.warn('Could not enable IndexedDB persistence:', err);
+    });
+  } catch (err) {
+    console.warn('Persistence setup error:', err);
+  }
 } catch (error) {
   console.error("Firebase initialization error:", error);
   throw error;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Plus, LogOut, Sun, Moon } from 'lucide-react';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -55,7 +56,7 @@ const TopNav: React.FC = () => {
       {/* contrast overlay so text stays readable */}
       <div
         aria-hidden
-        className={`absolute inset-0 z-10 pointer-events-none ${isDark ? 'bg-black/50' : 'bg-white/40 backdrop-blur-sm'}`}
+        className={`absolute inset-0 z-10 pointer-events-none ${isDark ? 'bg-black/80' : 'bg-white/80 backdrop-blur-sm'}`}
       />
       <div className={`container mx-auto px-4 py-4 flex items-center justify-between relative z-20 font-extrabold ${isDark ? 'text-white' : 'text-black'}`}>
         <div className="flex items-center gap-4">
@@ -77,6 +78,19 @@ const TopNav: React.FC = () => {
             </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Network status indicator */}
+          {(() => {
+            const { online } = useNetworkStatus();
+            return (
+              <div className="flex items-center gap-2 mr-2">
+                <span
+                  title={online ? 'Online' : 'Offline'}
+                  className={`w-3 h-3 rounded-full ${online ? 'bg-emerald-400' : 'bg-red-500'} block`}
+                />
+                <span className={`text-xs ${isDark ? 'text-white/80' : 'text-black/80'}`}>{online ? 'Online' : 'Offline'}</span>
+              </div>
+            );
+          })()}
           <Button variant="ghost" size="sm" onClick={() => navigate('/')} aria-label="Home">Home</Button>
           <Button variant="ghost" size="sm" onClick={() => navigate('/settings')} aria-label="Settings">Settings</Button>
           <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Logout">Logout</Button>
